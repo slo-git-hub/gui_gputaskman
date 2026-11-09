@@ -2,6 +2,10 @@
 
 **An `htop` for what's inside your GPU, not just how full it is.**
 
+> **This fork adds a Windows desktop app**: a window, a system tray icon, and an installer.
+> See [Windows desktop app](#windows-desktop-app). Everything else is the upstream
+> [shanselman/gputaskman](https://github.com/shanselman/gputaskman) terminal tool, unchanged.
+
 Windows + NVIDIA/AMD, with Linux and WSL support (NVIDIA everywhere, AMD on native Linux; see
 [Linux and WSL](#linux-and-wsl)) and macOS on Apple Silicon (see [macOS](#macos-apple-silicon)). A terminal UI
 that connects per-process GPU memory and engine activity with loaded runtimes, model files, and
@@ -21,6 +25,66 @@ CPU-only, NPU-only, and cloud workloads are out of scope.
 
 > Early, experimental software. Device and process counters are measurements; classifications
 > and GGUF-derived breakdowns are estimates. This does not dump VRAM or enumerate a game's textures.
+
+## Windows desktop app
+
+`gtm-gui` is a desktop window and tray icon built on the same collector as the terminal UI, so it
+shows the same measured numbers and follows the same rules: unknown values are shown as `n/a`, never
+as `0`, and estimates are labelled as estimates.
+
+![GPU Task Manager desktop window: stat cards, VRAM by workload, process table and LLM details](docs/screenshots/gui-window.png)
+
+- **At a glance:** GPU load, VRAM, temperature, power, clock and shared (system RAM) memory, each
+  shown as n/a when the driver doesn't report it.
+- **VRAM by workload:** a bar that splits measured VRAM into LLM, diffusion, browser, compositor,
+  video and other uses, plus what is unattributed and what is free.
+- **Processes:** a sortable table with each app's own icon, VRAM, GPU %, spill to RAM, runtime
+  (CUDA, D3D12, ggml...) and what is inside. You can filter it, or switch to all processes.
+- **Details:** select a process to see its engines, paging estimate and, for LLM servers, the split
+  between weights, KV cache and compute, plus context size and tokens per second.
+
+### Tray icon
+
+<img src="docs/screenshots/gui-tray-menu.png" alt="Tray menu listing GPU processes with VRAM and GPU %" width="354" align="right">
+
+The tray icon fills up as VRAM is used, turning amber at 75% and red at 90%. Hovering over it shows
+VRAM and GPU load.
+
+**Right-click** it for the GPU summary and the top 10 processes with their VRAM and GPU %. Clicking a
+process opens the window with that process selected.
+
+**Closing the window** keeps the app running in the tray. To exit, choose **Quit** from the tray menu.
+
+**Start with Windows** in the tray menu launches the app at login, hidden in the tray. It writes one
+value to your own `HKCU\...\Run` key, so no admin rights are needed.
+
+<br clear="right">
+
+### Install
+
+Choose one:
+
+- **Installer:** run `GPUTaskManager-VERSION-Setup-x64.exe`. It installs for your user only, so there
+  is no admin prompt, into `%LOCALAPPDATA%\Programs\GPU Task Manager`. It adds Start menu entries and
+  an optional desktop shortcut, and offers a *Start with Windows* checkbox. Uninstall it from
+  Settings, Apps; that also removes the auto-start entry.
+- **Portable ZIP:** extract `gputaskman-VERSION-windows-x64.zip` and double-click `gtm-gui.exe`. Keep
+  the `_internal` folder next to it. The terminal app, `gputaskman.exe`, is in the same folder.
+- **From source:** `uv run --extra gui gtm-gui` (add `--tray` to start in the tray).
+
+The builds are unsigned, so Windows SmartScreen may warn on first run. Choose **More info**, then
+**Run anyway**.
+
+### Build it yourself
+
+```powershell
+uv sync --locked --group release --extra gui
+uv run --locked --group release --extra gui python tools\build_portable.py --arch x64    # dist\*.zip
+winget install --id JRSoftware.InnoSetup --exact                                         # once
+uv run --locked --group release --extra gui python tools\build_installer.py --arch x64   # dist\*-Setup-x64.exe
+```
+
+The screenshots above use illustrative sample data, rendered with `tools/capture_gui_screenshots.py`.
 
 ## Install from PyPI
 

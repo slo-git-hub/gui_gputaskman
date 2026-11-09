@@ -1,3 +1,4 @@
+import sys
 from pathlib import Path
 
 from PyInstaller.utils.hooks import collect_data_files, copy_metadata
@@ -29,4 +30,26 @@ exe = EXE(
     name="gputaskman",
     console=True,
 )
-bundle = COLLECT(exe, analysis.binaries, analysis.datas, name="gputaskman")
+parts = [exe, analysis.binaries, analysis.datas]
+
+# Windows: the desktop GUI and tray icon (gtm-gui.exe) ship beside the console app and share _internal.
+if sys.platform == "win32":
+    gui = Analysis(
+        [str(root / "tools" / "gui_entry.py")],
+        pathex=[str(root / "src")],
+        datas=collect_data_files("textual") + copy_metadata("gputaskman", recursive=True)
+        + copy_metadata("PySide6-Essentials", recursive=True),
+    )
+    gui.binaries = [entry for entry in gui.binaries if not is_driver_lib(Path(entry[0]).name)]
+    gui_exe = EXE(
+        PYZ(gui.pure),
+        gui.scripts,
+        [],
+        exclude_binaries=True,
+        name="gtm-gui",
+        console=False,
+        icon=str(root / "tools" / "gtm-gui.ico"),
+    )
+    parts += [gui_exe, gui.binaries, gui.datas]
+
+bundle = COLLECT(*parts, name="gputaskman")

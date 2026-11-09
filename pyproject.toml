@@ -24,9 +24,17 @@ dependencies = [
     "textual>=8.2.8",
 ]
 
+[project.optional-dependencies]
+gui = [
+    "PySide6-Essentials>=6.8",
+]
+
 [project.scripts]
 gputaskman = "gputaskman.cli:main"
 gtm = "gputaskman.cli:main"
+
+[project.gui-scripts]
+gtm-gui = "gputaskman.gui:main"
 
 [project.urls]
 Repository = "https://github.com/shanselman/gputaskman"

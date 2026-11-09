@@ -97,6 +97,22 @@ class GuiTests(unittest.TestCase):
         self.assertEqual(self.window.selected_key, "20")
         self.assertIn("dwm.exe", self.window.inspector.toPlainText())
 
+    def test_tray_menu_start_with_windows(self):
+        from unittest.mock import patch
+        from gputaskman import autostart
+        state = {"on": False}
+        with patch.object(autostart, "supported", return_value=True), \
+                patch.object(autostart, "is_enabled", side_effect=lambda: state["on"]), \
+                patch.object(autostart, "set_enabled", side_effect=lambda on: state.__setitem__("on", on)):
+            self.window.build_tray_menu()
+            action = next(a for a in self.window.tray_menu.actions() if a.text() == "Start with Windows")
+            self.assertFalse(action.isChecked())
+            action.trigger()
+            self.assertTrue(state["on"])
+            self.window.build_tray_menu()
+            action = next(a for a in self.window.tray_menu.actions() if a.text() == "Start with Windows")
+            self.assertTrue(action.isChecked())
+
     def test_tray_icon_renders(self):
         for fraction in (None, 0.0, 0.5, 0.95):
             self.assertFalse(tray_pixmap(fraction).isNull())

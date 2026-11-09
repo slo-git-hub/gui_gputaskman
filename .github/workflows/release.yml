@@ -59,12 +59,19 @@ jobs:
           } finally {
             Pop-Location
           }
+      - name: Build installer (Inno Setup, preinstalled on x64 runners)
+        if: matrix.arch == 'x64'
+        shell: pwsh
+        run: |
+          uv run --locked --group release --extra gui python tools\build_installer.py --arch x64
+          if ($LASTEXITCODE -ne 0) { throw "Installer build failed" }
       - uses: actions/upload-artifact@v4
         with:
           name: windows-${{ matrix.arch }}-portable
           path: |
             dist/*.zip
             dist/*.zip.sha256
+            dist/*-Setup-*.exe
           if-no-files-found: error
 
   build-linux:

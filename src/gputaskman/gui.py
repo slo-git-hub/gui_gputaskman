@@ -22,6 +22,7 @@ from PySide6.QtWidgets import (QAbstractItemView, QApplication, QComboBox, QFile
                                QHeaderView, QLabel, QLineEdit, QMainWindow, QMenu, QPushButton, QSplitter,
                                QSystemTrayIcon, QTableWidget, QTableWidgetItem, QTextBrowser, QVBoxLayout, QWidget)
 
+from . import autostart
 from .collector import BACKEND, Collector, ProcRow, Snapshot, enumerate_adapters, ordered_adapters
 from .llm import gb
 from .report import has_engine_counters, has_spill_counters, has_wddm_counters, inferred_note, vram_label
@@ -465,9 +466,24 @@ class MainWindow(QMainWindow):
                 action.triggered.connect(lambda _=False, key=r.key: self.show_process(key))
         m.addSeparator()
         m.addAction("Open GPU Task Manager", self.bring_to_front)
+        if autostart.supported():
+            start = m.addAction("Start with Windows")
+            start.setCheckable(True)
+            try:
+                start.setChecked(autostart.is_enabled())
+            except OSError:
+                start.setEnabled(False)
+            start.toggled.connect(self.set_autostart)
         pause = m.addAction("Resume" if self.pause_btn.isChecked() else "Pause")
         pause.triggered.connect(lambda: self.pause_btn.toggle())
         m.addAction("Quit", self.quit)
+
+    def set_autostart(self, enabled: bool) -> None:
+        try:
+            autostart.set_enabled(enabled)
+        except OSError as error:  # Degrade with a reason: say why, never crash the tray.
+            self.status.setText(f"Could not change Start with Windows: {error}")
+            self.tray.showMessage("GPU Task Manager", f"Could not change Start with Windows: {error}")
 
     def update_tray(self, s: Snapshot) -> None:
         frac = s.vram_used / s.vram_total if s.vram_total and s.vram_used is not None else None

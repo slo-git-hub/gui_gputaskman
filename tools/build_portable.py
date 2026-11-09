@@ -174,7 +174,9 @@ def add_notices(bundle: Path, system: str = "windows") -> None:
         "Python: see PYTHON-LICENSE.txt.\n"
         f"PyInstaller bootloader: see licenses{sep}pyinstaller (including its exception).\n"
         f"NVIDIA Python bindings: see licenses{sep}nvidia-ml-py.\n"
-        f"Runtime package metadata and license texts are included in _internal{sep}*.dist-info.\n"
+        + ("Qt for Python (PySide6) and Qt, used by gtm-gui.exe: LGPLv3, dynamically linked; their license texts are in\n"
+           f"_internal{sep}PySide6_Essentials-*.dist-info and https://www.qt.io/licensing.\n" if system == "windows" else "")
+        + f"Runtime package metadata and license texts are included in _internal{sep}*.dist-info.\n"
         "GPU libraries are provided by the installed driver, system libraries by the operating system.\n",
         encoding="utf-8",
     )
@@ -231,7 +233,9 @@ def build(output: Path, arch: str, tag: str | None = None) -> Path:
             "  .\\gputaskman.exe\n"
             "  .\\gputaskman.exe --once\n"
             "  .\\gputaskman.exe --json\n\n"
-            "Press q to quit the interactive display.\n"
+            "Press q to quit the interactive display.\n\n"
+            "Desktop window and tray icon: double-click gtm-gui.exe (or run .\\gtm-gui.exe --tray to start in the tray).\n"
+            "Closing the window keeps it in the tray; right-click the tray icon to quit.\n\n"
             "Requires Windows and an NVIDIA or AMD GPU with a current WDDM driver.\n"
             "No Python, uv, CUDA Toolkit, models, or administrator session is required.\n"
             "This build is unsigned. No drivers or inference servers are bundled.\n"
